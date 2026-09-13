@@ -1,0 +1,134 @@
+# hyperparams.yaml
+# All hyperparameters used in the paper
+# Paper: Offset-Normalised SavGol for LoRa V2X Key Agreement
+# Paper ID: 20265854
+
+# ── Random seed ────────────────────────────────────────────────────────
+random:
+  seed: 42
+  # Applied via: numpy.random.seed(42) and torch.manual_seed(42)
+
+# ── Quantisation ───────────────────────────────────────────────────────
+quantisation:
+  n_levels: 32          # Gray-code quantisation levels (5-bit)
+  n_bits: 5             # Bits per RSSI sample
+  encoding: gray_code   # Gray-code (not binary)
+  boundary: none        # No guard-band discarding
+
+# ── Partition schemes ──────────────────────────────────────────────────
+partition:
+  baseline_comparison:
+    scheme: "60/20/20"
+    train_frac: 0.60
+    val_frac: 0.20
+    test_frac: 0.20
+    rounding: floor     # floor(N * fraction)
+    ordering: chronological
+    purpose: "Section 6.6 unified baseline comparison"
+
+  ablation_study:
+    scheme: "50/25/25"
+    train_frac: 0.50
+    val_frac: 0.25
+    test_frac: 0.25
+    rounding: floor
+    ordering: chronological
+    purpose: "Section 6.4 ablation study (A1–A8)"
+
+# ── Proposed method (A5: Offset + SavGol) ─────────────────────────────
+savgol:
+  window_length: 5      # w = 5
+  polyorder: 2          # p = 2
+  mode: interp          # scipy default (centered, two-sided)
+  # Convolution weights: [-3, 12, 17, 12, -3] / 35
+  # Requires 2 future samples — NOT strictly causal
+  # Causal implementation: future work
+
+# ── A3: Wavelet denoising ──────────────────────────────────────────────
+wavelet:
+  wavelet: db4
+  level: 3
+  threshold_method: soft
+  threshold_estimator: universal  # sigma * sqrt(2*log(N))
+
+# ── A4: Moving Average ─────────────────────────────────────────────────
+moving_average:
+  window: 3
+  mode: same            # numpy.convolve mode
+
+# ── A6: Kalman filter ──────────────────────────────────────────────────
+kalman:
+  process_noise: 1.0e-5   # Q
+  measurement_noise: 0.1  # R
+
+# ── A7/A8: BiLSTM (negative findings) ─────────────────────────────────
+bilstm:
+  hidden_size: 64
+  num_layers: 2
+  input_window: 5
+  output_window: 1
+  batch_size: 8
+  epochs: 100
+  learning_rate: 0.001
+  optimizer: adam
+  loss: mse
+  seed: 42
+  # NOTE: BiLSTM is a NEGATIVE FINDING
+  # KDR = 0.4150 under 50 or fewer training samples (7/8 conditions)
+
+# ── Baselines ──────────────────────────────────────────────────────────
+toward:
+  # Adapted from: [13] Toward et al., IEEE Trans. Mobile Comput.
+  input_adaptation: "z-score normalised RSSI reshaped to pseudo-CSI matrix"
+  architecture: CNN
+  epochs: 50
+  learning_rate: 0.001
+  seed: 42
+
+scenario:
+  # Adapted from: [14] Scenario-based method
+  architecture: LSTM
+  hidden_size: 32
+  epochs: 100
+  learning_rate: 0.001
+  seed: 42
+
+plkg:
+  # Adapted from: [15] PLKG
+  method: level_crossing
+  quantisation: gray_code_32level  # common protocol
+
+pls_lora:
+  # Adapted from: [16] PLS-LoRa
+  method: polynomial_smoothing
+  quantisation: gray_code_32level  # common protocol
+
+# ── Timing measurement ─────────────────────────────────────────────────
+timing:
+  laptop:
+    iterations: 1000
+    warmup: 50
+    aggregation: median
+    threads: 1          # single-threaded
+    python: "3.11"
+    scipy: "1.11.3"
+    numpy: "1.25.2"
+    os: "Ubuntu 22.04"
+    cpu: "Intel Core i7-10th Gen"
+    ram_gb: 16
+
+  rpi5:
+    iterations: 1         # single run (no warm-up)
+    warmup: 0
+    aggregation: single_run
+    threads: 1
+    python: "3.11"
+    scipy: "1.11.3"
+    numpy: "1.25.2"
+    os: "Raspberry Pi OS (64-bit)"
+    cpu: "ARM Cortex-A76 @ 2.4 GHz"
+    ram_gb: 8
+
+  # NOTE: Asymmetric timing methodology (Laptop: 1000-iter median,
+  # RPi5: single run) may contribute to the observed 10.4x difference.
+  # No hardware profiling was conducted.

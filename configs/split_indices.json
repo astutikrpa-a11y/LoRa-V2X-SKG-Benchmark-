@@ -1,0 +1,47 @@
+{
+  "_description": "Exact chronological split indices for all 8 measurement files under both partition schemes",
+  "_paper": "Offset-Normalised SavGol for LoRa V2X Key Agreement (Paper ID: 20265854)",
+  "_note": "Indices are [start, end) — Python slice notation. test_end = N.",
+
+  "V2I_Turning_20": {
+    "N": 35,
+    "60_20_20": {"train": [0,21], "val": [21,28], "test": [28,35]},
+    "50_25_25": {"train": [0,17], "val": [17,25], "test": [25,35]}
+  },
+  "V2I_Turning_30": {
+    "N": 50,
+    "60_20_20": {"train": [0,30], "val": [30,40], "test": [40,50]},
+    "50_25_25": {"train": [0,25], "val": [25,37], "test": [37,50]}
+  },
+  "V2I_Straight_20": {
+    "N": 80,
+    "60_20_20": {"train": [0,48], "val": [48,64], "test": [64,80]},
+    "50_25_25": {"train": [0,40], "val": [40,60], "test": [60,80]}
+  },
+  "V2I_Straight_30": {
+    "N": 89,
+    "60_20_20": {"train": [0,53], "val": [53,70], "test": [70,89]},
+    "50_25_25": {"train": [0,44], "val": [44,66], "test": [66,89]}
+  },
+  "V2V_Opposite_20": {
+    "N": 26,
+    "60_20_20": {"train": [0,15], "val": [15,20], "test": [20,26]},
+    "50_25_25": {"train": [0,13], "val": [13,19], "test": [19,26]}
+  },
+  "V2V_Opposite_30": {
+    "N": 19,
+    "60_20_20": {"train": [0,11], "val": [11,14], "test": [14,19]},
+    "50_25_25": {"train": [0,9],  "val": [9,13],  "test": [13,19]}
+  },
+  "V2V_Same_20": {
+    "N": 102,
+    "60_20_20": {"train": [0,61], "val": [61,81], "test": [81,102]},
+    "50_25_25": {"train": [0,51], "val": [51,76], "test": [76,102]},
+    "_note": "Only condition with training > 50 under 50/25/25 (training=51)"
+  },
+  "V2V_Same_30": {
+    "N": 94,
+    "60_20_20": {"train": [0,56], "val": [56,74], "test": [74,94]},
+    "50_25_25": {"train": [0,47], "val": [47,70], "test": [70,94]}
+  }
+}
