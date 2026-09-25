@@ -1,138 +1,81 @@
 # LoRa-V2X-SKG-Benchmark
 
-**Offset-Normalised Savitzky–Golay Channel Smoothing for Key Agreement in Heterogeneous LoRa V2X**
+Code and field data for:
 
-*Submitted to: International Journal of Intelligent Engineering and Systems (IJIES)*
-*Paper ID: 20265854*
+**Offset-Normalised Savitzky–Golay Channel Smoothing for Key Agreement in Heterogeneous LoRa V2X: Unified Benchmarking and Ablation Study**
+*International Journal of Intelligent Engineering and Systems (IJIES), Paper ID 20265854*
 
----
-
-## Repository Structure
-
-```
-LoRa-V2X-SKG-Benchmark/
-│
-├── preprocessing/          # A1–A8 ablation preprocessing scripts
-│   ├── A1_raw.py
-│   ├── A2_offset.py
-│   ├── A3_offset_wavelet.py
-│   ├── A4_offset_movavg.py
-│   ├── A5_offset_savgol.py   ← Proposed method
-│   ├── A6_offset_kalman.py
-│   ├── A7_offset_bilstm.py
-│   └── A8_offset_wavelet_bilstm.py
-│
-├── baselines/              # Four reimplemented baselines
-│   ├── toward.py           # Toward [13]
-│   ├── scenario.py         # Scenario [14]
-│   ├── plkg.py             # PLKG [15]
-│   └── pls_lora.py         # PLS-LoRa [16]
-│
-├── utils/
-│   ├── quantisation.py     # 32-level Gray-code quantisation
-│   ├── reconciliation.py   # Cascade reconciliation
-│   ├── metrics.py          # KDR, KGR, KAR, entropy
-│   └── partition.py        # Chronological split (60/20/20, 50/25/25)
-│
-├── configs/
-│   ├── hyperparams.yaml    # All hyperparameters
-│   └── split_indices.json  # Exact split indices per file
-│
-├── outputs/                # Per-file CSV results
-│   ├── ablation_results.csv
-│   └── baseline_results.csv
-│
-├── data/                   # Raw CSV data (8 measurement files)
-│   └── README_data.md
-│
-├── run_ablation.py         # Main ablation study runner
-├── run_baseline.py         # Baseline comparison runner
-├── timing.py               # Computational timing measurement
-└── requirements.txt
-```
-
----
-
-## Requirements
-
-```bash
-pip install -r requirements.txt
-```
-
-```
-numpy==1.25.2
-scipy==1.11.3
-pandas>=1.5.0
-scikit-learn>=1.2.0
-torch>=2.0.0
-pywt>=1.4.0
-PyYAML>=6.0
-```
+The repository contains only the scripts and data that produce the values reported in the paper.
 
 ---
 
 ## Data
 
-Eight paired RSSI CSV files (Alice + Bob) from field measurements:
+Eight paired RSSI files (one measurement run per condition). Each CSV has the columns `rssi_bob`, `rssi_alice` (dBm); Alice = RFM95, Bob = SX1262.
 
-| File | Scenario | Speed | N samples |
-|------|----------|-------|-----------|
-| combined_v2i_belok_20.csv | V2I Turning | 20 km/h | 35 |
-| combined_v2i_belok_30.csv | V2I Turning | 30 km/h | 50 |
-| combined_v2i_lurus_20.csv | V2I Straight | 20 km/h | 80 |
-| combined_v2i_lurus_30.csv | V2I Straight | 30 km/h | 89 |
-| combined_V2V_berlawanan20.csv | V2V Opposite | 20 km/h | 26 |
-| combined_V2V_berlawanan30.csv | V2V Opposite | 30 km/h | 19 |
-| combined_V2V_searah20.csv | V2V Same Dir | 20 km/h | 102 |
-| combined_V2V_searah30.csv | V2V Same Dir | 30 km/h | 94 |
+| File | Scenario | Speed | N |
+|------|----------|-------|---|
+| `combined_v2i belok 20.csv` | V2I Turning | 20 km/h | 35 |
+| `combined_v2i belok 30.csv` | V2I Turning | 30 km/h | 50 |
+| `combined_v2i lurus 20.csv` | V2I Straight | 20 km/h | 80 |
+| `combined_v2i lurus 30.csv` | V2I Straight | 30 km/h | 89 |
+| `combined_V2V berlawanan20.csv` | V2V Opposite Direction | 20 km/h | 26 |
+| `combined_V2V berlawanan30.csv` | V2V Opposite Direction | 30 km/h | 19 |
+| `combined_V2V searah20.csv` | V2V Same Direction | 20 km/h | 102 |
+| `combined_V2V searah30.csv` | V2V Same Direction | 30 km/h | 94 |
 
-Each CSV contains columns: `rssi_alice`, `rssi_bob`
+Total: 495 paired observations.
 
 ---
 
-## Quick Start
+## Scripts and the results they reproduce
+
+Run every script from the repository root (the scripts read the CSV files by name from the working directory).
+
+| Script | Split | Reproduces |
+|--------|-------|-----------|
+| `Ablation_SavGol_Final.py` | 50/25/25 | Table 9: KDR, IQR, KDR SD, KGR, entropy, degenerate flag for A1–A8 |
+| `Table9_Corr_RMSE.py` | 50/25/25 | Table 9: Corr and RMSE columns for A1–A6 |
+| `Proposed_SavGol_Final.py` | 60/20/20 | Proposed Offset + Savitzky–Golay pipeline (Tables 8, 10, 11) |
+| `Proposed_A5_Revised.py` | 60/20/20 | Proposed Offset + Wavelet variant (Tables 10, 11) |
+| `Proposed_Revised_v3.py` | 60/20/20 | Proposed Offset + Wavelet + BiLSTM variant (Tables 10, 11) |
+| `Toward_Revised.py` | 60/20/20 | Toward [13], adapted (Tables 10, 11) |
+| `VehicleKey_Revised.py` | 60/20/20 | Scenario [14] (Vehicle-Key), adapted (Tables 10, 11) |
+| `PLKG_Revised.py` | 60/20/20 | PLKG [15], adapted (Tables 10, 11) |
+| `PLS_LoRa_Revised.py` | 60/20/20 | PLS-LoRa [16], adapted (Tables 10, 11) |
+
+The single-file pipeline scripts use `FILE_PATH = "combined_v2i lurus 20.csv"` (the Table 10 condition); change `FILE_PATH` to evaluate another condition (Table 8 per-scenario values). Each script prints its per-stage timing (preprocessing, quantisation, reconciliation, SHA-256, total); timing values depend on the hardware on which the script is run (Laptop and Raspberry Pi 5 in the paper).
 
 ```bash
-# Run full ablation study (A1–A8)
-python run_ablation.py --split 50_25_25 --seed 42
-
-# Run baseline comparison (60/20/20 split)
-python run_baseline.py --split 60_20_20 --condition v2i_straight_20
-
-# Measure computational timing
-python timing.py --method savgol --iterations 1000 --warmup 50
+pip install -r requirements.txt
+python Ablation_SavGol_Final.py      # Table 9 (A1–A8)
+python Table9_Corr_RMSE.py           # Table 9 Corr / RMSE (A1–A6)
+python Proposed_SavGol_Final.py      # Proposed pipeline, V2I Straight 20 km/h
 ```
 
 ---
 
-## Random Seeds
+## Evaluation protocol
 
-All ML-based methods (A7, A8, Toward, Scenario) use `seed=42`:
-```python
-import numpy as np
-import torch
-np.random.seed(42)
-torch.manual_seed(42)
-```
+- **Chronological, file-level partitioning.** 60/20/20 (train/validation/test) for the baseline comparison (Tables 8, 10, 11); 50/25/25 for the ablation study (Table 9). Counts use floor rounding; exact indices are in `configs/split_indices.json`.
+- **Leakage control.** Offset estimate and quantisation thresholds come from the training partition only; sliding windows (ML pipelines) are formed within each partition.
+- **Quantisation.** Common 32-level, 5-bit Gray code, no guard band.
+- **Reconciliation.** Oracle-assisted Cascade-style; post-reconciliation KAR = 1.0 by construction and is reported only as an upper bound.
 
----
+## Random seeds
 
-## Citation
+- **A7 and A8 (ablation, BiLSTM):** 20 seeds, `s = 0, 1, …, 19` (`for s in range(N_SEEDS)`, `N_SEEDS = 20`), applied through `torch.manual_seed(s)` and `np.random.seed(s)`. Table 9 reports mean ± SD over the 20 runs; runs whose output bit string has Shannon entropy < 0.5 are treated as degenerate and excluded from the mean.
+- **A1–A6:** deterministic (seed 0 is set but has no effect).
+- **Table 10 ML pipelines** (Toward [13], Scenario [14], Proposed Wavelet + BiLSTM): single run with `SEED = 42`.
 
-```bibtex
-@article{astutik2025lorav2x,
-  title={Offset-Normalised Savitzky--Golay Channel Smoothing for 
-         Key Agreement in Heterogeneous LoRa V2X},
-  author={Astutik, Rini Puji and Yuliana, Mike and Santoso, Tri Budi 
-          and others},
-  journal={International Journal of Intelligent Engineering and Systems},
-  year={2025},
-  note={Paper ID: 20265854}
-}
-```
+All hyperparameters are listed in `configs/hyperparams.yaml`.
 
 ---
+
+## Scope
+
+The metrics characterise legitimate-node (Alice–Bob) bit agreement only. No eavesdropper channel was measured, and no information-theoretic secrecy is claimed.
 
 ## License
 
-MIT License — see LICENSE file.
+MIT — see `LICENSE`.

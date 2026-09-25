@@ -1,134 +1,66 @@
 # hyperparams.yaml
-# All hyperparameters used in the paper
-# Paper: Offset-Normalised SavGol for LoRa V2X Key Agreement
-# Paper ID: 20265854
+# Hyperparameters exactly as implemented in the scripts of this repository.
+# Paper: Offset-Normalised Savitzky-Golay Channel Smoothing for Key Agreement
+#        in Heterogeneous LoRa V2X (IJIES, Paper ID 20265854)
 
-# ── Random seed ────────────────────────────────────────────────────────
-random:
-  seed: 42
-  # Applied via: numpy.random.seed(42) and torch.manual_seed(42)
+# ── Random seeds ───────────────────────────────────────────────────────
+seeds:
+  ablation_A7_A8: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+  # Ablation_SavGol_Final.py: `for s in range(N_SEEDS)`, N_SEEDS = 20,
+  # applied via torch.manual_seed(s) and np.random.seed(s).
+  # Table 9 reports mean ± SD over the 20 seeds; runs whose Alice bit string
+  # has Shannon entropy < 0.5 (degenerate) are excluded from the mean.
+  ablation_A1_A6: 0            # deterministic; seed has no effect
+  table10_ml_pipelines: 42     # Toward_Revised.py, VehicleKey_Revised.py, Proposed_Revised_v3.py
 
-# ── Quantisation ───────────────────────────────────────────────────────
-quantisation:
-  n_levels: 32          # Gray-code quantisation levels (5-bit)
-  n_bits: 5             # Bits per RSSI sample
-  encoding: gray_code   # Gray-code (not binary)
-  boundary: none        # No guard-band discarding
-
-# ── Partition schemes ──────────────────────────────────────────────────
+# ── Partition schemes (chronological, per file, floor rounding) ───────
 partition:
-  baseline_comparison:
-    scheme: "60/20/20"
-    train_frac: 0.60
-    val_frac: 0.20
-    test_frac: 0.20
-    rounding: floor     # floor(N * fraction)
-    ordering: chronological
-    purpose: "Section 6.6 unified baseline comparison"
+  baseline_comparison:   {scheme: "60/20/20", train: 0.60, val: 0.20, used_for: "Tables 8, 10, 11"}
+  ablation_study:        {scheme: "50/25/25", train: 0.50, val: 0.25, used_for: "Table 9"}
+  # Exact indices per file: configs/split_indices.json
 
-  ablation_study:
-    scheme: "50/25/25"
-    train_frac: 0.50
-    val_frac: 0.25
-    test_frac: 0.25
-    rounding: floor
-    ordering: chronological
-    purpose: "Section 6.4 ablation study (A1–A8)"
+# ── Quantisation (common to all pipelines) ─────────────────────────────
+quantisation:
+  n_levels: 32
+  n_bits: 5
+  encoding: gray_code
+  thresholds: "min/max of Alice training partition (after preprocessing)"
+  guard_band: none
 
-# ── Proposed method (A5: Offset + SavGol) ─────────────────────────────
+# ── Offset normalisation ──────────────────────────────────────────────
+offset:
+  estimator: median          # delta = median(A_train - B_train)
+  applied_to: alice          # A_corr = A - delta
+
+# ── Proposed smoothing (A5) ───────────────────────────────────────────
 savgol:
-  window_length: 5      # w = 5
-  polyorder: 2          # p = 2
-  mode: interp          # scipy default (centered, two-sided)
-  # Convolution weights: [-3, 12, 17, 12, -3] / 35
-  # Requires 2 future samples — NOT strictly causal
-  # Causal implementation: future work
+  window_length: 5
+  polyorder: 2
+  mode: interp               # scipy default, centred (2 future samples)
 
-# ── A3: Wavelet denoising ──────────────────────────────────────────────
-wavelet:
-  wavelet: db4
-  level: 3
-  threshold_method: soft
-  threshold_estimator: universal  # sigma * sqrt(2*log(N))
+# ── Other ablation smoothers ──────────────────────────────────────────
+wavelet:        {wavelet: db4, level: 1, threshold: "universal, soft"}   # A3, A8
+moving_average: {window: 3, mode: same}                                 # A4
+kalman:         {Q: 1.0e-3, R: 0.1}                                     # A6
 
-# ── A4: Moving Average ─────────────────────────────────────────────────
-moving_average:
-  window: 3
-  mode: same            # numpy.convolve mode
+# ── A7/A8 BiLSTM (negative finding) ───────────────────────────────────
+bilstm_ablation:
+  hidden_size: 16
+  num_layers: 1
+  bidirectional: true
+  dropout: 0.1
+  seq_len: 5
+  max_epochs: 100
+  early_stopping_patience: 15
+  optimizer: {name: adam, lr: 0.001, weight_decay: 1.0e-4}
+  lr_scheduler: {name: ReduceLROnPlateau, patience: 8, factor: 0.5}
+  loss: "0.9*MSE + 0.1*BCE"
 
-# ── A6: Kalman filter ──────────────────────────────────────────────────
-kalman:
-  process_noise: 1.0e-5   # Q
-  measurement_noise: 0.1  # R
-
-# ── A7/A8: BiLSTM (negative findings) ─────────────────────────────────
-bilstm:
-  hidden_size: 64
-  num_layers: 2
-  input_window: 5
-  output_window: 1
-  batch_size: 8
-  epochs: 100
-  learning_rate: 0.001
-  optimizer: adam
-  loss: mse
-  seed: 42
-  # NOTE: BiLSTM is a NEGATIVE FINDING
-  # KDR = 0.4150 under 50 or fewer training samples (7/8 conditions)
-
-# ── Baselines ──────────────────────────────────────────────────────────
-toward:
-  # Adapted from: [13] Toward et al., IEEE Trans. Mobile Comput.
-  input_adaptation: "z-score normalised RSSI reshaped to pseudo-CSI matrix"
-  architecture: CNN
-  epochs: 50
-  learning_rate: 0.001
-  seed: 42
-
-scenario:
-  # Adapted from: [14] Scenario-based method
-  architecture: LSTM
-  hidden_size: 32
-  epochs: 100
-  learning_rate: 0.001
-  seed: 42
-
-plkg:
-  # Adapted from: [15] PLKG
-  method: level_crossing
-  quantisation: gray_code_32level  # common protocol
-
-pls_lora:
-  # Adapted from: [16] PLS-LoRa
-  method: polynomial_smoothing
-  quantisation: gray_code_32level  # common protocol
-
-# ── Timing measurement ─────────────────────────────────────────────────
-timing:
-  laptop:
-    iterations: 1000
-    warmup: 50
-    aggregation: median
-    threads: 1          # single-threaded
-    python: "3.11"
-    scipy: "1.11.3"
-    numpy: "1.25.2"
-    os: "Ubuntu 22.04"
-    cpu: "Intel Core i7-10th Gen"
-    ram_gb: 16
-
-  rpi5:
-    iterations: 1         # single run (no warm-up)
-    warmup: 0
-    aggregation: single_run
-    threads: 1
-    python: "3.11"
-    scipy: "1.11.3"
-    numpy: "1.25.2"
-    os: "Raspberry Pi OS (64-bit)"
-    cpu: "ARM Cortex-A76 @ 2.4 GHz"
-    ram_gb: 8
-
-  # NOTE: Asymmetric timing methodology (Laptop: 1000-iter median,
-  # RPi5: single run) may contribute to the observed 10.4x difference.
-  # No hardware profiling was conducted.
+# ── Table 10 pipelines (60/20/20) ─────────────────────────────────────
+toward_13:          {model: 2D-CNN, window: 4, epochs: 30, lr: 0.001, input: "z-score pseudo-CSI (adapted)"}
+scenario_14:        {model: BiLSTM, hidden: 64, epochs: 200, lr: 0.01, preprocessing: "arRSSI + MA(3) + z-score"}
+plkg_15:            {wavelet: db4, level: 2, level_crossing_m: 2, reconciliation: cascade}
+pls_lora_16:        {savgol_window: 5, polyorder: 2, offset: none, reconciliation: cascade}
+proposed_wavelet:   {offset: median, wavelet: db4, level: 1, reconciliation: cascade}
+proposed_wav_bilstm: {hidden: 16, seq_len: 5, max_epochs: 150, early_stopping_patience: 20,
+                      lr: 0.001, weight_decay: 1.0e-4, loss: "0.9*MSE + 0.1*BCE"}

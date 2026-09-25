@@ -1,8 +1,5 @@
-numpy==1.25.2
-scipy==1.11.3
-pandas>=1.5.0
-scikit-learn>=1.2.0
-torch>=2.0.0
-PyWavelets>=1.4.0
-PyYAML>=6.0
-matplotlib>=3.6.0
+numpy>=1.25
+scipy>=1.11
+pandas>=1.5
+torch>=2.0
+PyWavelets>=1.4
