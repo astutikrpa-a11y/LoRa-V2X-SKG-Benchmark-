@@ -39,12 +39,23 @@ Run every script from the repository root (the scripts read the CSV files by nam
 | `Proposed_SavGol_Final.py` | 60/20/20 | Proposed Offset + Savitzky–Golay pipeline (Tables 8, 10, 11) |
 | `Proposed_A5_Revised.py` | 60/20/20 | Proposed Offset + Wavelet variant (Tables 10, 11) |
 | `Proposed_Revised_v3.py` | 60/20/20 | Proposed Offset + Wavelet + BiLSTM variant (Tables 10, 11) |
-| `Toward_Revised.py` | 60/20/20 | Toward [13], adapted (Tables 10, 11) |
+| `Toward_Revised.py` | 60/20/20 | Toward [13], adapted (original version; its preprocessing timer also enclosed the one-time PyTorch set-up) |
+| `Toward_Revised_v2.py` | 60/20/20 | Toward [13], adapted (Tables 10, 11): same algorithm, preprocessing timer corrected so that the one-time PyTorch/model/optimizer set-up is not timed, as in the other ML scripts |
+| `Timing_All_Pipelines.py` | 60/20/20 | Table 11 timing: runs all seven pipeline scripts with one protocol and reports the median of each stage |
 | `VehicleKey_Revised.py` | 60/20/20 | Scenario [14] (Vehicle-Key), adapted (Tables 10, 11) |
 | `PLKG_Revised.py` | 60/20/20 | PLKG [15], adapted (Tables 10, 11) |
 | `PLS_LoRa_Revised.py` | 60/20/20 | PLS-LoRa [16], adapted (Tables 10, 11) |
 
 The single-file pipeline scripts use `FILE_PATH = "combined_v2i lurus 20.csv"` (the Table 10 condition); change `FILE_PATH` to evaluate another condition (Table 8 per-scenario values). Each script prints its per-stage timing (preprocessing, quantisation, reconciliation, SHA-256, total); timing values depend on the hardware on which the script is run (Laptop and Raspberry Pi 5 in the paper).
+
+**Table 11 timing.** All values in Table 11 were produced with `Timing_All_Pipelines.py`, which executes each unmodified pipeline script repeatedly and reads the stage times that script records (one discarded cold-start run first):
+
+```
+python Timing_All_Pipelines.py        # Laptop: median of 100 runs after 10 warm-up runs
+python Timing_All_Pipelines.py 1 0    # Raspberry Pi 5: single run
+```
+
+The script prints the per-stage medians, T_proc, the acquisition-inclusive total, and the bits, KDR, KGR and Agreed KGR of Table 10, and writes them to `timing_results_<REPEATS>x<WARMUP>.csv`.
 
 ```bash
 pip install -r requirements.txt
