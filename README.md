@@ -11,7 +11,7 @@ The repository contains only the scripts and data that produce the values report
 
 ## Data
 
-Eight paired RSSI files (one measurement run per condition). Each CSV has the columns `rssi_bob`, `rssi_alice` (dBm); Alice = RFM95, Bob = SX1262.
+Eight paired RSSI files (one measurement run per condition). Each CSV has the columns `rssi_bob`, `rssi_alice` (dBm); Alice = Heltec WiFi LoRa 32 V3 (SX1262), Bob = Cosmic LoRa Pulse V1 (RFM95); Alice reports the higher RSSI.
 
 | File | Scenario | Speed | N |
 |------|----------|-------|---|
